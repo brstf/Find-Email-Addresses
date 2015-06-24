@@ -33,15 +33,15 @@ def findEmailAddresses(domain):
     # First, construct a valid url from the domain name
     url = getUrl(domain)
 
-    # Crawl 
+    # Crawl
     addresses = crawlForEmail(url)
     return addresses
 
 
 def getPage(url):
     """
-    Retrieve webpage stream for a given URL. If the requested resource is not 
-    found or an error occurs -1 will be returned.  If a timeout error occurs, 
+    Retrieve webpage stream for a given URL. If the requested resource is not
+    found or an error occurs -1 will be returned.  If a timeout error occurs,
     this will re-attempt opening the page 3 times before giving up.
     """
 
@@ -68,14 +68,14 @@ def getEmails(s):
 
     # A regex pattern for email addresses
     email_pattern = re.compile(r"([A-Za-z0-9#\-_~!$&'()*+,;=:]+"
-                                "(?:\.[A-Za-z0-9#\-_~!$&'()*+,;=:]+)*"
-                                "@[A-Za-z0-9\-]+\.[A-Za-z0-9\-]+)")
+                               "(?:\.[A-Za-z0-9#\-_~!$&'()*+,;=:]+)*"
+                               "@[A-Za-z0-9\-]+\.[A-Za-z0-9\-]+)")
     emails = email_pattern.findall(s)
 
     # Strip off the "mailto:" before returning, for cases where an email link
     # is given, but not the email text
-    emails = [email [7:] if email.startswith("mailto:") else email 
-              for email in emails] 
+    emails = [email[7:] if email.startswith("mailto:") else email
+              for email in emails]
     return emails
 
 
@@ -92,9 +92,9 @@ def getLinks(s, domain):
     links = [parse.urljoin(domain, link) for link in links]
 
     # Finally, remove any links not in the domain or image links
-    links = [link for link in links 
+    links = [link for link in links
              if parse.urlparse(link).geturl().startswith(domain) and
-                not (link[-4:] in [".png", ".jpg", ".gif"])]
+             not (link[-4:] in [".png", ".jpg", ".gif"])]
 
     return links
 
@@ -130,7 +130,7 @@ def crawlForEmail(url, domain="", visited=set()):
 
     for link in links:
         # Recur on this function, adding any found emails to the email set
-        emails.update(crawlForEmail(link, domain, visited))       
+        emails.update(crawlForEmail(link, domain, visited))
 
     return emails
 
