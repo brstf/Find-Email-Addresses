@@ -41,8 +41,8 @@ def findEmailAddresses(domain):
 def getPage(url):
     """
     Retrieve webpage stream for a given URL. If the requested resource is not 
-    found or an error occurs, the empty string "" will be returned.  If a timeout
-    error occurs, this will re-attempt opening the page 3 times before giving up.
+    found or an error occurs -1 will be returned.  If a timeout error occurs, 
+    this will re-attempt opening the page 3 times before giving up.
     """
 
     attempts = 0
@@ -52,12 +52,13 @@ def getPage(url):
             resp = urlopen(url)
             return resp
         except URLError, e:
+            # If we get a 408, try again, on any other error exit
             if hasattr(e, 'code') and e.code == 408:
                 attempts += 1
             else:
                 attempts = 3
 
-    return ""
+    return -1
 
 
 def getEmails(s):
@@ -107,7 +108,7 @@ def crawlForEmail(url, domain="", visited=set()):
 
     # First get all text, and get all emails and links
     resp = getPage(url)
-    if resp == "":
+    if resp == -1:
         # On error, return the empty set; no emails found
         return set()
 
