@@ -57,10 +57,16 @@ def getEmails(s):
     """
 
     # A regex pattern for email addresses
-    email_pattern_string = r"""([A-Za-z0-9#\-_~!$&'()*+,;=:]+(?:\.[A-Za-z0-9#\-_~!$&'()*+,;=:]+)*@[A-Za-z0-9\-]+\.[A-Za-z0-9\-]+)"""
-    pattern = re.compile(email_pattern_string)
-    emails = pattern.findall(s)
-    return [email [7:] if email.startswith("mailto:") else email for email in emails]
+    email_pattern = re.compile(r"([A-Za-z0-9#\-_~!$&'()*+,;=:]+"
+                                "(?:\.[A-Za-z0-9#\-_~!$&'()*+,;=:]+)*"
+                                "@[A-Za-z0-9\-]+\.[A-Za-z0-9\-]+)")
+    emails = email_pattern.findall(s)
+
+    # Strip off the "mailto:" before returning, for cases where an email link
+    # is given, but not the email text
+    emails = [email [7:] if email.startswith("mailto:") else email 
+              for email in emails] 
+    return emails
 
 
 def getLinks(s, domain):
@@ -68,11 +74,11 @@ def getLinks(s, domain):
     Find and return all clickable links in the given string s.
     """
 
-    link_pattern_string = r"""<a[^<>]+href="([^"]+)"""
-    pattern = re.compile(link_pattern_string)
-    links = list(set(pattern.findall(s)))
+    # Find all links of the form <a href="(link)"
+    link_pattern = re.compile(r"""<a[^<>]+href\s*=\s*"([^"]+)""")
+    links = list(set(link_pattern.findall(s)))
 
-    # Add the domain to relative links, 
+    # Add the domain to relative links
     links = [parse.urljoin(domain, link) for link in links]
 
     # Finally, remove any links not in the domain
@@ -92,13 +98,16 @@ def crawlForEmail(url, domain="", visited=set()):
     # First get all text, and get all emails and links
     resp = getPage(url)
     if resp == "":
+        # On error, return the empty set; no emails found
         return set()
 
     rtext = resp.read()
     if domain == "":
+        # If no domain was given, the url was the domain
         domain = resp.geturl()
         visited.add(domain)
 
+    # Find the emails and links from the page text
     emails = set(getEmails(rtext))
     links = getLinks(rtext, domain)
 
@@ -108,12 +117,10 @@ def crawlForEmail(url, domain="", visited=set()):
     # Add all of the links intended to visit to the visited set
     visited.update(set(links))
 
-    # For each link
     for link in links:
-        # Recur on this function, add emails to the email set
+        # Recur on this function, adding any found emails to the email set
         emails.update(crawlForEmail(link, domain, visited))       
 
-    # Return all found emails
     return emails
 
 
