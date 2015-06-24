@@ -81,9 +81,10 @@ def getLinks(s, domain):
     # Add the domain to relative links
     links = [parse.urljoin(domain, link) for link in links]
 
-    # Finally, remove any links not in the domain
+    # Finally, remove any links not in the domain or image links
     links = [link for link in links 
-             if parse.urlparse(link).geturl().startswith(domain)]
+             if parse.urlparse(link).geturl().startswith(domain) and
+                not (link[-4:] in [".png", ".jpg", ".gif"])]
 
     return links
 

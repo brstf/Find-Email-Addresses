@@ -11,7 +11,6 @@ Run with exactly one argument, the domain that should be crawled:
     Found these email addresses:
     ktyacke@respoke.io
     support@slides.com
-    sedwards@farragut.org
     hello@slides.com
     git@github.com
     >
