@@ -1,15 +1,20 @@
 import sys
 import re
+import socket
 
 try:
     # Python 3
-    from urllib.request import urlopen
+    from urllib.request import urlopen, Request
     import urllib.parse as parse
     from urllib.error import URLError
 except ImportError:
     # Python 2
-    from urllib2 import urlopen, URLError
+    from urllib2 import Request, urlopen, URLError
     import urlparse as parse
+
+
+USER_AGENT = 'User-Agent'
+USER_AGENT_STRING = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.130 Safari/537.36'
 
 
 def getUrl(domain):
@@ -49,7 +54,9 @@ def getPage(url):
 
     while attempts < 3:
         try:
-            resp = urlopen(url)
+            req = Request(url)
+            req.add_header(USER_AGENT, USER_AGENT_STRING)
+            resp = urlopen(req)
             return resp
         except URLError, e:
             # If we get a 408, try again, on any other error exit
@@ -57,6 +64,8 @@ def getPage(url):
                 attempts += 1
             else:
                 attempts = 3
+        except socket.error:
+            pass
 
     return -1
 
@@ -99,7 +108,7 @@ def getLinks(s, domain):
     return links
 
 
-def crawlForEmail(url, domain="", visited=set()):
+def crawlForEmail(url):
     """
     Recursive function that scans for emails in the text on the page at url,
     then recursively calls on each link on that page in the same domain that
@@ -113,24 +122,41 @@ def crawlForEmail(url, domain="", visited=set()):
         return set()
 
     rtext = resp.read()
-    if domain == "":
-        # If no domain was given, the url was the domain
-        domain = resp.geturl()
-        visited.add(domain)
+    domain = resp.geturl()
+    
+    visited = set([domain])
 
     # Find the emails and links from the page text
     emails = set(getEmails(rtext))
     links = getLinks(rtext, domain)
 
     # Remove any links already visited
-    links = [link for link in links if link not in visited]
+    tovisit = list(set([link for link in links if link not in visited]))
 
     # Add all of the links intended to visit to the visited set
-    visited.update(set(links))
+    visited.update(set(tovisit))
 
-    for link in links:
-        # Recur on this function, adding any found emails to the email set
-        emails.update(crawlForEmail(link, domain, visited))
+    # Crawl until the to visit list is empty
+    while len(tovisit) > 0:
+        # Get the new link to crawl from the list
+        link = tovisit.pop()
+
+        # Get the page text
+        resp = getPage(link)
+        if not resp == -1:
+            rtext = resp.read()
+
+            # Find the emails and links from the page text
+            emails.update(set(getEmails(rtext)))
+            links = getLinks(rtext, domain)
+
+            # Remove any links already visited
+            links = [link for link in links if link not in visited]
+            tovisit.extend(links)
+
+            # Add all of the links intended to visit to the visited set
+            visited.update(set(tovisit))
+
 
     return emails
 
