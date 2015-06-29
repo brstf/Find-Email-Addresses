@@ -58,7 +58,7 @@ def getPage(url):
             req.add_header(USER_AGENT, USER_AGENT_STRING)
             resp = urlopen(req)
             return resp
-        except URLError, e:
+        except URLError as e:
             # If we get a 408, try again, on any other error exit
             if hasattr(e, 'code') and e.code == 408:
                 attempts += 1
@@ -79,7 +79,7 @@ def getEmails(s):
     email_pattern = re.compile(r"([A-Za-z0-9#\-_~!$&'()*+,;=:]+"
                                "(?:\.[A-Za-z0-9#\-_~!$&'()*+,;=:]+)*"
                                "@[A-Za-z0-9\-]+\.[A-Za-z0-9\-]+)")
-    emails = email_pattern.findall(s)
+    emails = email_pattern.findall(str(s))
 
     # Strip off the "mailto:" before returning, for cases where an email link
     # is given, but not the email text
@@ -95,7 +95,7 @@ def getLinks(s, domain):
 
     # Find all links of the form <a href="(link)"
     link_pattern = re.compile(r"""<a[^<>]+href\s*=\s*"([^"]+)""")
-    links = list(set(link_pattern.findall(s)))
+    links = list(set(link_pattern.findall(str(s))))
 
     # Add the domain to relative links
     links = [parse.urljoin(domain, link) for link in links]
@@ -167,7 +167,7 @@ def printUsage():
     be given as the first and only argument to the program.
     """
 
-    print "USAGE: find_email_addresses.py [DOMAIN.EXT]"
+    print("USAGE: find_email_addresses.py [DOMAIN.EXT]")
 
 
 if __name__ == "__main__":
@@ -177,6 +177,6 @@ if __name__ == "__main__":
     else:
         emails = findEmailAddresses(sys.argv[1])
         if len(emails) > 0:
-            print "Found these email addresses:"
+            print("Found these email addresses:")
             for email in emails:
-                print email
+                print(email)
